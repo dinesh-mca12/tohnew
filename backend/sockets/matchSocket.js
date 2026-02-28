@@ -5,6 +5,11 @@ import { getAccuracy } from '../utils/gameUtils.js';
 import { activeMatches, ensureRuntimeMatch } from './runtimeStore.js';
 
 const roomName = (matchId) => `match:${matchId}`;
+const adminRoomName = 'admins:live';
+const getAdminCredentials = () => ({
+  username: process.env.ADMIN_USERNAME || 'admin',
+  password: process.env.ADMIN_PASSWORD || 'admin123',
+});
 
 const buildRoomSnapshot = (runtime) => ({
   matchId: runtime.matchId,
@@ -22,7 +27,7 @@ const buildRoomSnapshot = (runtime) => ({
 
 export const emitLiveMatches = (io) => {
   const payload = Array.from(activeMatches.values()).map((m) => buildRoomSnapshot(m));
-  io.emit('admin:matches', payload);
+  io.to(adminRoomName).emit('admin:matches', payload);
 };
 
 export const forceStartMatch = async (io, matchId) => {
@@ -54,6 +59,19 @@ export const forceStartMatch = async (io, matchId) => {
 };
 
 export const registerMatchSocket = (io, socket) => {
+  socket.on('admin:auth', ({ username, password }) => {
+    const creds = getAdminCredentials();
+    const valid = username && password && username === creds.username && password === creds.password;
+    if (!valid) {
+      socket.emit('admin:auth:error', { message: 'Invalid admin credentials.' });
+      return;
+    }
+    socket.data.isAdmin = true;
+    socket.join(adminRoomName);
+    socket.emit('admin:auth:ok', { ok: true });
+    emitLiveMatches(io);
+  });
+
   socket.on('match:join', async ({ matchId, playerName }) => {
     try {
       const match = await Match.findById(matchId);

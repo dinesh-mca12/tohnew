@@ -119,6 +119,8 @@ Use `backend/.env.example` as template.
 PORT=5000
 MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>/toh-live
 CORS_ORIGINS=http://localhost:5173,https://your-frontend.vercel.app
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change-me
 ```
 
 ### Frontend (`frontend/.env`)
@@ -170,6 +172,8 @@ Open frontend at `http://localhost:5173`.
 - `GET /api/admin/leaderboard`
 - `GET /api/admin/leaderboard.csv`
 - `POST /api/admin/reset`
+
+Admin APIs are protected by Basic Auth using `ADMIN_USERNAME` and `ADMIN_PASSWORD`.
 
 ## Socket Events
 
@@ -225,6 +229,21 @@ Set `CORS_ORIGINS` in backend to comma-separated allowed URLs, for example:
 ```bash
 CORS_ORIGINS=http://localhost:5173,https://toh-live.vercel.app
 ```
+
+## Admin Login
+
+- Admin panel requires username and password.
+- Backend validates credentials for both admin REST APIs and admin socket live updates.
+- Set credentials in backend env:
+
+```bash
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change-me
+```
+
+- Local fallback (only if env vars are missing):
+  - Username: `admin`
+  - Password: `admin123`
 
 ## Production Commands
 
