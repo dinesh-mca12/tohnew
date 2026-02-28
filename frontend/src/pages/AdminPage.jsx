@@ -126,6 +126,8 @@ export default function AdminPage() {
       return;
     }
     setMessage(`Match created: ${data._id}`);
+    setPlayer1('');
+    setPlayer2('');
     loadAll();
   };
 

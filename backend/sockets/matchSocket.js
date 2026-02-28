@@ -3,6 +3,7 @@ import { LeaderboardEntry } from '../models/LeaderboardEntry.js';
 import { calculateScore } from '../utils/score.js';
 import { getAccuracy } from '../utils/gameUtils.js';
 import { activeMatches, ensureRuntimeMatch } from './runtimeStore.js';
+import { getJoinBlockReason, resolveJoinSide } from '../utils/matchJoin.js';
 
 const roomName = (matchId) => `match:${matchId}`;
 const adminRoomName = 'admins:live';
@@ -87,25 +88,23 @@ export const registerMatchSocket = (io, socket) => {
         player2: match.player2,
       });
 
-      let side = null;
-      if (match.player1 === playerName) {
-        side = 'player1';
-      } else if (match.player2 === playerName) {
-        side = 'player2';
-      } else if (!match.player1) {
-        match.player1 = playerName;
-        side = 'player1';
-      } else if (!match.player2) {
-        match.player2 = playerName;
-        side = 'player2';
-      }
+      const side = resolveJoinSide({
+        match,
+        playerName,
+        runtime,
+      });
 
       if (!side) {
-        socket.emit('match:error', { message: 'Match already has two players.' });
+        const reason = getJoinBlockReason({ match, runtime });
+        socket.emit('match:error', {
+          message: `${reason} Current players: ${match.player1 || '-'} and ${match.player2 || '-'}.`,
+        });
         return;
       }
 
-      await match.save();
+      if (match.isModified('player1') || match.isModified('player2')) {
+        await match.save();
+      }
 
       runtime.player1 = match.player1;
       runtime.player2 = match.player2;

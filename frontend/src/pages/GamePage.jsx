@@ -98,21 +98,28 @@ export default function GamePage() {
     event.preventDefault();
     setError('');
     try {
+      const trimmedName = nameInput.trim();
+      const trimmedMatchId = matchInput.trim();
+      if (!trimmedName || !trimmedMatchId) {
+        setError('Please enter both player name and match ID.');
+        return;
+      }
+
       const response = await fetch(`${apiUrl}/api/matches/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matchId: matchInput, playerName: nameInput }),
+        body: JSON.stringify({ matchId: trimmedMatchId, playerName: trimmedName }),
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data.message || 'Unable to join.');
       }
       socket.emit('match:join', {
         matchId: data.matchId,
-        playerName: nameInput,
+        playerName: trimmedName,
       });
     } catch (err) {
-      setError(err.message);
+      setError(err?.message || 'Unable to join match.');
     }
   };
 
