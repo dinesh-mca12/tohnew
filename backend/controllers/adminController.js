@@ -4,6 +4,10 @@ import { toCsv } from '../utils/csv.js';
 import { forceStartMatch } from '../sockets/matchSocket.js';
 import { activeMatches } from '../sockets/runtimeStore.js';
 
+export const adminLogin = async (req, res) => {
+  return res.json({ ok: true, adminUser: req.adminUser });
+};
+
 export const createMatch = async (req, res) => {
   try {
     const { player1 = null, player2 = null, diskCount = 4 } = req.body;

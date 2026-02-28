@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  adminLogin,
   createMatch,
   getLeaderboard,
   getLeaderboardCsv,
@@ -13,6 +14,7 @@ const router = Router();
 
 router.use(requireAdminAuth);
 
+router.post('/auth/login', adminLogin);
 router.post('/matches', createMatch);
 router.get('/matches/live', getLiveMatches);
 router.post('/matches/start-all', startAllMatches);

@@ -17,12 +17,10 @@ export default function AdminPage() {
   const handlers = useMemo(
     () => ({
       'admin:auth:ok': () => {
-        setAuthenticated(true);
-        setMessage('Admin login successful');
+        setMessage('Admin live updates connected');
       },
       'admin:auth:error': ({ message: socketMessage }) => {
-        setAuthenticated(false);
-        setMessage(socketMessage || 'Invalid admin credentials');
+        setMessage(socketMessage || 'Admin socket auth failed');
       },
       'admin:matches': (list) => setMatches(list),
     }),
@@ -66,18 +64,41 @@ export default function AdminPage() {
     loadAll();
   }, [authenticated]);
 
-  const loginAdmin = (event) => {
+  const loginAdmin = async (event) => {
     event.preventDefault();
     if (!adminUsername || !adminPassword) {
       setMessage('Username and password are required');
       return;
     }
-    sessionStorage.setItem('admin_username', adminUsername);
-    sessionStorage.setItem('admin_password', adminPassword);
-    socket.emit('admin:auth', {
-      username: adminUsername,
-      password: adminPassword,
-    });
+    try {
+      const response = await fetch(`${apiUrl}/api/admin/auth/login`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      if (response.status === 401) {
+        setAuthenticated(false);
+        setMessage('Invalid admin username or password');
+        return;
+      }
+      if (!response.ok) {
+        setAuthenticated(false);
+        setMessage('Admin login failed');
+        return;
+      }
+
+      sessionStorage.setItem('admin_username', adminUsername);
+      sessionStorage.setItem('admin_password', adminPassword);
+      setAuthenticated(true);
+      setMessage('Admin login successful');
+
+      socket.emit('admin:auth', {
+        username: adminUsername,
+        password: adminPassword,
+      });
+    } catch (error) {
+      setAuthenticated(false);
+      setMessage('Unable to contact admin server');
+    }
   };
 
   const logoutAdmin = () => {
